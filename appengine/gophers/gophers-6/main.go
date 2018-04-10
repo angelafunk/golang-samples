@@ -7,22 +7,27 @@ package main
 import (
 	"fmt"
 	"html/template"
-	"io"
 	"net/http"
-	"path"
-	"strings"
 	"time"
-
-	"golang.org/x/net/context"
+	
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
-	"google.golang.org/appengine/delay"
 	"google.golang.org/appengine/log"
 
+	firebase "firebase.google.com/go"
+	
+	// [START new_imports]
+	"path"
+	"strings"
+	"io"
+	
 	"cloud.google.com/go/storage"
 	vision "cloud.google.com/go/vision/apiv1"
-	firebase "firebase.google.com/go"
 	uuid "github.com/satori/go.uuid"
+	
+	"golang.org/x/net/context"
+	"google.golang.org/appengine/delay"
+	// [END new_imports]
 )
 
 var (
@@ -34,19 +39,23 @@ var (
 	indexTemplate = template.Must(template.ParseFiles("index.html"))
 )
 
+// [START label_struct]
 // A Label is a description for a post's image.
 type Label struct {
 	Description string
 	Score       float32
 }
+// [END label_struct]
 
 type Post struct {
 	Author   string
 	UserID   string
 	Message  string
 	Posted   time.Time
+// [START new_post_fields]
 	ImageURL string
 	Labels   []Label
+// [END new_post_fields]
 }
 
 type templateParams struct {
@@ -255,7 +264,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		indexTemplate.Execute(w, params)
 		return
 	}
-
+	// [START image_post]
 	// Only look for labels if the post has an image.
 	if imageURL != "" {
 		// Run labelFunc. This will start a new Task in the background.
@@ -263,6 +272,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			log.Errorf(ctx, "delay Call %v", err)
 		}
 	}
+	// [END image_post]
 
 	// Prepend the post that was just added.
 	params.Posts = append([]Post{post}, params.Posts...)
